@@ -16,7 +16,7 @@ add_subdirectory(3rdParty/gprt)
 
 embed_devicecode(
   OUTPUT_TARGET
-    dbl_deviceCode
+    dev_code
   SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/deviceCode.hlsl
 )
@@ -24,4 +24,4 @@ embed_devicecode(
 add_executable(gprt-rtow src/main.cpp)
 target_compile_features(gprt-rtow PUBLIC cxx_std_14)
 target_include_directories(gprt-rtow PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(gprt-rtow PUBLIC dbl_deviceCode argparse gprt::gprt glfw ${OPENGL_gl_LIBRARY})
+target_link_libraries(gprt-rtow PUBLIC dev_code argparse gprt::gprt glfw ${OPENGL_gl_LIBRARY})
