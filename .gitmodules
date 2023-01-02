@@ -1,0 +1,9 @@
+[submodule "3rdParty/argparse"]
+	path = 3rdParty/argparse
+	url = https://github.com/p-ranav/argparse.git
+[submodule "gprt"]
+	path = gprt
+	url = https://github.com/gprt-org/gprt
+[submodule "3rdParty/gprt"]
+	path = 3rdParty/gprt
+	url = https://github.com/gprt-org/gprt
