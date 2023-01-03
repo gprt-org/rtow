@@ -33,10 +33,16 @@ GPRT_RAYGEN_PROGRAM(simpleRayGen, (RayGenData, record)) {
     printf("Hello from your first raygen program!\n");
   }
 
-  const float3 color = float3(float(pixelID.x) / float(record.fbSize.x - 1),
-                              float(record.fbSize.y - pixelID.y) / float(record.fbSize.y - 1),
-                               0.25f);
+  float u = float(pixelID.x) / float(record.fbSize.x-1);
+  float v = float(record.fbSize.y - pixelID.y) / float(record.fbSize.y - 1);
 
+  RayDesc ray;
+  ray.Origin = record.camera.pos;
+  ray.Direction = normalize(record.camera.pos + u * record.camera.horizontal + v * record.camera.vertical - record.camera.pos);
+
+
+  float t = 0.5f * ray.Direction.y + 1.0;
+  const float3 color = (1.0 - t)*float3(1.f, 1.f, 1.f) + t*float3(0.5f, 0.7f, 1.0f);
   // find the frame buffer location (x + width*y) and put the result there
   const int fbOfs = pixelID.x + record.fbSize.x * pixelID.y;
   gprt::store(record.fbPtr, fbOfs, gprt::make_bgra(color));

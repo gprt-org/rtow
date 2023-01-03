@@ -27,4 +27,11 @@ struct RayGenData {
   // pointers are represented using uint64_t
   alignas(16) gprt::Buffer fbPtr;
   alignas(8) int2 fbSize;
+
+  struct {
+    alignas(16) float3 horizontal; // horizontal field of view
+    alignas(16) float3 vertical;   // vertical field of view
+    alignas(16) float3 pos;    // camera position
+    alignas(16) float3 llc;    // lower-left corner of visiable space
+  } camera;
 };
