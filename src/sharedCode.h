@@ -34,4 +34,11 @@ struct RayGenData {
     alignas(16) float3 pos;    // camera position
     alignas(16) float3 llc;    // lower-left corner of visiable space
   } camera;
+
+  struct {
+    alignas(16) float3 center;
+    alignas(4) float radius;
+  } sphere;
 };
+
+struct MissProgData {};

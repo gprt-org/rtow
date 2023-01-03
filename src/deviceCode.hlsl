@@ -38,11 +38,26 @@ GPRT_RAYGEN_PROGRAM(simpleRayGen, (RayGenData, record)) {
 
   RayDesc ray;
   ray.Origin = record.camera.pos;
-  ray.Direction = normalize(record.camera.pos + u * record.camera.horizontal + v * record.camera.vertical - record.camera.pos);
+  float3 dir = normalize(record.camera.llc + u * record.camera.horizontal + v * record.camera.vertical - record.camera.pos);
+  ray.Direction = dir;
 
+  float3 color = float3 (1.0f, 1.0f, 1.0f);
 
-  float t = 0.5f * ray.Direction.y + 1.0;
-  const float3 color = (1.0 - t)*float3(1.f, 1.f, 1.f) + t*float3(0.5f, 0.7f, 1.0f);
+  // compute color based on sphere hit
+  float3 oc = record.camera.pos - record.sphere.center;
+  float b = dot(oc, dir);
+  float c = dot(oc, oc) - record.sphere.radius * record.sphere.radius;
+  float h = b*b - c;
+
+  if (h >= 0.0) {
+    float t = -b - sqrt(h);
+    float3 hit_pos = ray.Origin + t * ray.Direction;
+    color = float3(1.0f, 0.0f, 0.0f);
+  } else {
+    float t = 0.5f * ray.Direction.y + 1.0;
+    color = (1.0 - t)*float3(1.f, 1.f, 1.f) + t*float3(0.5f, 0.7f, 1.0f);
+  }
+
   // find the frame buffer location (x + width*y) and put the result there
   const int fbOfs = pixelID.x + record.fbSize.x * pixelID.y;
   gprt::store(record.fbPtr, fbOfs, gprt::make_bgra(color));
