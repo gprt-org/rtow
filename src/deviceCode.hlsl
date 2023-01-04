@@ -52,7 +52,8 @@ GPRT_RAYGEN_PROGRAM(simpleRayGen, (RayGenData, record)) {
   if (h >= 0.0) {
     float t = -b - sqrt(h);
     float3 hit_pos = ray.Origin + t * ray.Direction;
-    color = float3(1.0f, 0.0f, 0.0f);
+    float3 normal = hit_pos - record.sphere.center;
+    color = 0.5 * (1.f + normal);
   } else {
     float t = 0.5f * ray.Direction.y + 1.0;
     color = (1.0 - t)*float3(1.f, 1.f, 1.f) + t*float3(0.5f, 0.7f, 1.0f);

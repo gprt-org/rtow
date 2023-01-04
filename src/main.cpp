@@ -7,7 +7,7 @@
 extern GPRTProgram dev_code;
 
 
-const int image_width = 800;
+const int image_width = 2048;
 
 const float3 sphere_org {0.f, 0.f, -1.f};
 const float sphere_rad = .5f;
