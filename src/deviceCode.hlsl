@@ -22,6 +22,25 @@
 
 #include "sharedCode.h"
 
+struct Payload {
+  float3 color;
+  float3 ray_dir;
+};
+
+struct Attribute {
+  float3 position;
+};
+
+GPRT_COMPUTE_PROGRAM(SphereBounds, (SphereBoundsData, record)) {
+  int primID = DispatchThreadID.x;
+  float3 position = gprt::load<float3>(record.vertex, primID);
+  float radius = gprt::load<float>(record.radius, primID);
+  float3 aabbMin = position - float3(radius, radius, radius);
+  float3 aabbMax = position + float3(radius, radius, radius);
+  gprt::store(record.aabbs, 2 * primID, aabbMin);
+  gprt::store(record.aabbs, 2 * primID + 1, aabbMax);
+}
+
 // The first parameter here is the name of our entry point.
 //
 // The second is the type and name of the shader record. A shader record
@@ -40,26 +59,60 @@ GPRT_RAYGEN_PROGRAM(simpleRayGen, (RayGenData, record)) {
   ray.Origin = record.camera.pos;
   float3 dir = normalize(record.camera.llc + u * record.camera.horizontal + v * record.camera.vertical - record.camera.pos);
   ray.Direction = dir;
+  ray.TMin = 0.0;
+  ray.TMax = 1000;
 
-  float3 color = float3 (1.0f, 1.0f, 1.0f);
-
-  // compute color based on sphere hit
-  float3 oc = record.camera.pos - record.sphere.center;
-  float b = dot(oc, dir);
-  float c = dot(oc, oc) - record.sphere.radius * record.sphere.radius;
-  float h = b*b - c;
-
-  if (h >= 0.0) {
-    float t = -b - sqrt(h);
-    float3 hit_pos = ray.Origin + t * ray.Direction;
-    float3 normal = hit_pos - record.sphere.center;
-    color = 0.5 * (1.f + normal);
-  } else {
-    float t = 0.5f * ray.Direction.y + 1.0;
-    color = (1.0 - t)*float3(1.f, 1.f, 1.f) + t*float3(0.5f, 0.7f, 1.0f);
-  }
+  RaytracingAccelerationStructure world = gprt::getAccelHandle(record.world);
+  Payload payload;
+  payload.ray_dir = dir;
+  TraceRay(world,
+           RAY_FLAG_FORCE_OPAQUE,
+           0xff,
+           0,
+           1,
+           0,
+           ray,
+           payload);
 
   // find the frame buffer location (x + width*y) and put the result there
   const int fbOfs = pixelID.x + record.fbSize.x * pixelID.y;
-  gprt::store(record.fbPtr, fbOfs, gprt::make_bgra(color));
+  gprt::store(record.fbPtr, fbOfs, gprt::make_bgra(payload.color));
 }
+
+GPRT_INTERSECTION_PROGRAM(SphereIntersection, (SphereGeomData, record)) {
+  uint primID = PrimitiveIndex();
+
+  float3 position = gprt::load<float3>(record.vertex, primID);
+  float radius = gprt::load<float>(record.radius, primID);
+
+  float3 ro = ObjectRayOrigin();
+  float3 rd = ObjectRayDirection();
+
+  float3 oc = ro - position;
+  float b = dot(oc, rd);
+  float c = dot(oc, oc) - radius * radius;
+  float h = b * b - c;
+
+  if (h < 0.0)
+    return;
+  float tHit = -b - sqrt(h);
+
+  Attribute attr;
+  attr.position = position;
+  ReportHit(tHit, /*hitKind*/ 0, attr);
+}
+
+GPRT_CLOSEST_HIT_PROGRAM(SphereClosestHit, (SphereGeomData, record),
+                         (Payload, payload), (Attribute, attribute)) {
+  float3 origin = attribute.position;
+  float3 hitPos = ObjectRayOrigin() + RayTCurrent() * ObjectRayDirection();
+  float3 normal = normalize(hitPos - origin);
+  payload.color = 0.5 * (1.f + + normal);
+  payload.ray_dir = ObjectRayDirection();
+}
+
+GPRT_MISS_PROGRAM(miss, (MissProgData, record), (Payload, payload)) {
+  float t = 0.5f * payload.ray_dir.y + 1.0;
+  payload.color = (1.0 - t)*float3(1.f, 1.f, 1.f) + t*float3(0.5f, 0.7f, 1.0f);
+}
+

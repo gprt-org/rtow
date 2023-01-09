@@ -22,11 +22,30 @@
 
 #include "gprt.h"
 
+struct SphereBoundsData {
+  /*! array/buffer of vertex indices */
+  alignas(16) gprt::Buffer vertex; // vec3f*
+  /*! array/buffer of vertex positions */
+  alignas(16) gprt::Buffer radius; // float *
+  /*! array/buffer of AABBs */
+  alignas(16) gprt::Buffer aabbs;
+};
+
+/* variables for the triangle mesh geometry */
+struct SphereGeomData {
+  /*! array/buffer of vertex indices */
+  alignas(16) gprt::Buffer vertex; // vec3f*
+  /*! array/buffer of vertex positions */
+  alignas(16) gprt::Buffer radius; // float *
+};
+
 // note! HLSL aligns to float4 boundaries!
 struct RayGenData {
   // pointers are represented using uint64_t
   alignas(16) gprt::Buffer fbPtr;
   alignas(8) int2 fbSize;
+
+  alignas(16) gprt::Accel world;
 
   struct {
     alignas(16) float3 horizontal; // horizontal field of view
@@ -34,11 +53,6 @@ struct RayGenData {
     alignas(16) float3 pos;    // camera position
     alignas(16) float3 llc;    // lower-left corner of visiable space
   } camera;
-
-  struct {
-    alignas(16) float3 center;
-    alignas(4) float radius;
-  } sphere;
 };
 
 struct MissProgData {};
