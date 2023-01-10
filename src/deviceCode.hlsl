@@ -21,10 +21,10 @@
 // SOFTWARE.
 
 #include "sharedCode.h"
+#include "rng.h"
 
 struct Payload {
   float3 color;
-  float3 ray_dir;
 };
 
 struct Attribute {
@@ -52,31 +52,47 @@ GPRT_RAYGEN_PROGRAM(simpleRayGen, (RayGenData, record)) {
     printf("Hello from your first raygen program!\n");
   }
 
-  float u = float(pixelID.x) / float(record.fbSize.x-1);
-  float v = float(record.fbSize.y - pixelID.y) / float(record.fbSize.y - 1);
+  Payload payload;
+  payload.color = float3(0.f, 0.f, 0.f);
 
   RayDesc ray;
   ray.Origin = record.camera.pos;
-  float3 dir = normalize(record.camera.llc + u * record.camera.horizontal + v * record.camera.vertical - record.camera.pos);
-  ray.Direction = dir;
   ray.TMin = 0.0;
   ray.TMax = 1000;
 
+  float3 color = float3(0.f, 0.f, 0.f);
+
+  const int samples_per_pixel = 100;
+
   RaytracingAccelerationStructure world = gprt::getAccelHandle(record.world);
-  Payload payload;
-  payload.ray_dir = dir;
-  TraceRay(world,
-           RAY_FLAG_FORCE_OPAQUE,
-           0xff,
-           0,
-           1,
-           0,
-           ray,
-           payload);
+
+  int i = 0;
+  while (i < samples_per_pixel) {
+
+    LCGRand rng = get_rng(i, pixelID, record.fbSize);
+
+    float u = (float(pixelID.x) + lcg_randomf(rng)) / float(record.fbSize.x - 1);
+    float v = (float(record.fbSize.y - pixelID.y) + lcg_randomf(rng)) / float(record.fbSize.y - 1);
+
+    float3 dir = normalize(record.camera.llc + u * record.camera.horizontal + v * record.camera.vertical - record.camera.pos);
+    ray.Direction = dir;
+
+    TraceRay(world,
+            RAY_FLAG_FORCE_OPAQUE,
+            0xff,
+            0,
+            1,
+            0,
+            ray,
+            payload);
+
+    color = payload.color + color;
+    i++;
+  }
 
   // find the frame buffer location (x + width*y) and put the result there
   const int fbOfs = pixelID.x + record.fbSize.x * pixelID.y;
-  gprt::store(record.fbPtr, fbOfs, gprt::make_bgra(payload.color));
+  gprt::store(record.fbPtr, fbOfs, gprt::make_bgra(color / samples_per_pixel));
 }
 
 GPRT_INTERSECTION_PROGRAM(SphereIntersection, (SphereGeomData, record)) {
@@ -107,12 +123,10 @@ GPRT_CLOSEST_HIT_PROGRAM(SphereClosestHit, (SphereGeomData, record),
   float3 origin = attribute.position;
   float3 hitPos = ObjectRayOrigin() + RayTCurrent() * ObjectRayDirection();
   float3 normal = normalize(hitPos - origin);
-  payload.color = 0.5 * (1.f + + normal);
-  payload.ray_dir = ObjectRayDirection();
+  payload.color = 0.5 * (1.f + normal);
 }
 
 GPRT_MISS_PROGRAM(miss, (MissProgData, record), (Payload, payload)) {
-  float t = 0.5f * payload.ray_dir.y + 1.0;
+  float t = 0.5f * WorldRayDirection().y + 1.0;
   payload.color = (1.0 - t)*float3(1.f, 1.f, 1.f) + t*float3(0.5f, 0.7f, 1.0f);
 }
-

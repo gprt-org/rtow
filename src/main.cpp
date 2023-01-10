@@ -7,11 +7,11 @@
 extern GPRTProgram dev_code;
 
 
-const int image_width = 2048;
+const int image_width = 1200;
 
-const int NUM_SPHERES = 1;
-const float3 sphere_org {0.f, 0.f, -1.f};
-const float sphere_rad = .5f;
+const int NUM_SPHERES = 2;
+const float3 sphere_org[] =  {{0.f, 0.f, -1.f}, {0.f, -100.5f, -1.f}};
+const float sphere_rad[] = {.5f, 100.f};
 
 int main() {
 
@@ -123,7 +123,11 @@ int main() {
   // setup shader binding table
   gprtBuildShaderBindingTable(gprt, GPRT_SBT_RAYGEN);
 
+  const int samples_per_pixel = 1;
+
   // populate the frame buffer
+  data->frames = samples_per_pixel;
+  gprtRayGenLaunch2D(gprt, rayGen, image_width, image_height);
   gprtRayGenLaunch2D(gprt, rayGen, image_width, image_height);
 
   // save the current frame buffer to file

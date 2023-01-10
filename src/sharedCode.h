@@ -43,9 +43,14 @@ struct SphereGeomData {
 struct RayGenData {
   // pointers are represented using uint64_t
   alignas(16) gprt::Buffer fbPtr;
+
   alignas(8) int2 fbSize;
 
   alignas(16) gprt::Accel world;
+
+  alignas(16) float rand;
+
+  alignas(4) int frames;
 
   struct {
     alignas(16) float3 horizontal; // horizontal field of view
