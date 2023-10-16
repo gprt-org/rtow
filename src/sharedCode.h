@@ -24,39 +24,39 @@
 
 struct SphereBoundsData {
   /*! array/buffer of vertex indices */
-  alignas(16) gprt::Buffer vertex; // vec3f*
+  gprt::Buffer vertex; // vec3f*
   /*! array/buffer of vertex positions */
-  alignas(16) gprt::Buffer radius; // float *
+  gprt::Buffer radius; // float *
   /*! array/buffer of AABBs */
-  alignas(16) gprt::Buffer aabbs;
+  gprt::Buffer aabbs;
 };
 
 /* variables for the triangle mesh geometry */
 struct SphereGeomData {
   /*! array/buffer of vertex indices */
-  alignas(16) gprt::Buffer vertex; // vec3f*
+  gprt::Buffer vertex; // vec3f*
   /*! array/buffer of vertex positions */
-  alignas(16) gprt::Buffer radius; // float *
+  gprt::Buffer radius; // float *
 };
 
 // note! HLSL aligns to float4 boundaries!
 struct RayGenData {
   // pointers are represented using uint64_t
-  alignas(16) gprt::Buffer fbPtr;
+  gprt::Buffer fbPtr;
 
-  alignas(8) int2 fbSize;
+  int2 fbSize;
 
-  alignas(16) gprt::Accel world;
+  gprt::Accel world;
 
-  alignas(16) float rand;
+  float rand;
 
-  alignas(4) int frames;
+  int frames;
 
   struct {
-    alignas(16) float3 horizontal; // horizontal field of view
-    alignas(16) float3 vertical;   // vertical field of view
-    alignas(16) float3 pos;    // camera position
-    alignas(16) float3 llc;    // lower-left corner of visiable space
+    float3 horizontal; // horizontal field of view
+    float3 vertical;   // vertical field of view
+    float3 pos;    // camera position
+    float3 llc;    // lower-left corner of visiable space
   } camera;
 };
 

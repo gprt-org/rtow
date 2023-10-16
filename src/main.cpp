@@ -45,13 +45,14 @@ int main() {
   // Note, we'll need to call this again after creating our acceleration
   // structures, as acceleration structures will introduce new shader
   // binding table records to the pipeline.
-  gprtBuildPipeline(gprt);
+
+  // gprtBuildPipeline(gprt);
 
   // geometry definition
   GPRTBufferOf<float3> vertexBuffer =
-      gprtDeviceBufferCreate<float3>(gprt, NUM_SPHERES, &sphere_org);
+      gprtDeviceBufferCreate<float3>(gprt, NUM_SPHERES, &(sphere_org[0]));
   GPRTBufferOf<float> radiusBuffer =
-      gprtDeviceBufferCreate<float>(gprt, NUM_SPHERES, &sphere_rad);
+      gprtDeviceBufferCreate<float>(gprt, NUM_SPHERES, &(sphere_rad[0]));
 
   // buffer for AABBs
   GPRTBufferOf<float3> aabbPositionsBuffer =
@@ -62,12 +63,12 @@ int main() {
   gprtAABBsSetPositions(aabbGeom, aabbPositionsBuffer, NUM_SPHERES);
 
   // get pointer to device-side geometry data and set values using buffers created above
-  SphereGeomData* geomData = gprtGeomGetPointer(aabbGeom);
+  SphereGeomData* geomData = gprtGeomGetParameters(aabbGeom);
   geomData->vertex = gprtBufferGetHandle(vertexBuffer);
   geomData->radius = gprtBufferGetHandle(radiusBuffer);
 
   // get pointer to device-sice AABBs data and set values using buffers created above
-  SphereBoundsData *boundsData = gprtComputeGetPointer(boundsProgram);
+  SphereBoundsData *boundsData = gprtComputeGetParameters(boundsProgram);
   boundsData->vertex = gprtBufferGetHandle(vertexBuffer);
   boundsData->radius = gprtBufferGetHandle(radiusBuffer);
   boundsData->aabbs = gprtBufferGetHandle(aabbPositionsBuffer);
@@ -81,11 +82,11 @@ int main() {
   // Now that the aabbPositionsBuffer is filled, we can compute our AABB
   // acceleration structure
   GPRTAccel aabbAccel = gprtAABBAccelCreate(gprt, 1, &aabbGeom);
-  gprtAccelBuild(gprt, aabbAccel);
+  gprtAccelBuild(gprt, aabbAccel, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
 
   // create an instance acceleration data structure
   GPRTAccel world = gprtInstanceAccelCreate(gprt, 1, &aabbAccel);
-  gprtAccelBuild(gprt, world);
+  gprtAccelBuild(gprt, world, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
 
   // NOW SETUP TO RAY TRACE
 
@@ -108,7 +109,7 @@ int main() {
 
   const auto llc = origin - horizontal / 2 - vertical / 2 - float3(0.f, 0.f, focal_length);
 
-  RayGenData *data = gprtRayGenGetPointer(rayGen);
+  RayGenData *data = gprtRayGenGetParameters(rayGen);
   data->fbPtr = gprtBufferGetHandle(frameBuffer);
   data->fbSize = int2(image_width, image_height);
   data->world = gprtAccelGetHandle(world);
@@ -118,7 +119,7 @@ int main() {
   data->camera.pos = origin;
   data->camera.llc = llc;
 
-  gprtBuildPipeline(gprt);
+  // gprtBuildPipeline(gprt);
 
   // setup shader binding table
   gprtBuildShaderBindingTable(gprt, GPRT_SBT_RAYGEN);

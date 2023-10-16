@@ -23,7 +23,7 @@
 #include "sharedCode.h"
 #include "rng.h"
 
-struct Payload {
+struct [raypayload] Payload {
   float3 color;
 };
 
@@ -31,7 +31,7 @@ struct Attribute {
   float3 position;
 };
 
-GPRT_COMPUTE_PROGRAM(SphereBounds, (SphereBoundsData, record)) {
+GPRT_COMPUTE_PROGRAM(SphereBounds, (SphereBoundsData, record), (1, 1, 1)) {
   int primID = DispatchThreadID.x;
   float3 position = gprt::load<float3>(record.vertex, primID);
   float radius = gprt::load<float>(record.radius, primID);
@@ -118,8 +118,7 @@ GPRT_INTERSECTION_PROGRAM(SphereIntersection, (SphereGeomData, record)) {
   ReportHit(tHit, /*hitKind*/ 0, attr);
 }
 
-GPRT_CLOSEST_HIT_PROGRAM(SphereClosestHit, (SphereGeomData, record),
-                         (Payload, payload), (Attribute, attribute)) {
+GPRT_CLOSEST_HIT_PROGRAM(SphereClosestHit, (SphereGeomData, record), (Payload, payload), (Attribute, attribute)) {
   float3 origin = attribute.position;
   float3 hitPos = ObjectRayOrigin() + RayTCurrent() * ObjectRayDirection();
   float3 normal = normalize(hitPos - origin);
