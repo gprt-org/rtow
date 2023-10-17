@@ -6,7 +6,6 @@
 
 extern GPRTProgram dev_code;
 
-
 const int image_width = 1200;
 
 const int NUM_SPHERES = 2;
@@ -46,13 +45,11 @@ int main() {
   // structures, as acceleration structures will introduce new shader
   // binding table records to the pipeline.
 
-  // gprtBuildPipeline(gprt);
-
   // geometry definition
   GPRTBufferOf<float3> vertexBuffer =
-      gprtDeviceBufferCreate<float3>(gprt, NUM_SPHERES, &(sphere_org[0]));
+      gprtDeviceBufferCreate<float3>(gprt, NUM_SPHERES, sphere_org);
   GPRTBufferOf<float> radiusBuffer =
-      gprtDeviceBufferCreate<float>(gprt, NUM_SPHERES, &(sphere_rad[0]));
+      gprtDeviceBufferCreate<float>(gprt, NUM_SPHERES, sphere_rad);
 
   // buffer for AABBs
   GPRTBufferOf<float3> aabbPositionsBuffer =
@@ -95,8 +92,9 @@ int main() {
   const int image_height = static_cast<int>(image_width / aspect_ratio);
 
   // create a frame buffer used to view/write images
-  GPRTBufferOf<uint32_t> frameBuffer =
-    gprtDeviceBufferCreate<uint32_t>(gprt, image_width * image_height);
+  GPRTBuffer frameBuffer = gprtDeviceBufferCreate(gprt, sizeof(uint32_t), image_width * image_height);
+  // GPRTBufferOf<uint32_t> frameBuffer =
+  //   gprtDeviceBufferCreate<uint32_t>(gprt, image_width * image_height);
 
   const float focal_length = 1.0;
 
@@ -122,7 +120,7 @@ int main() {
   // gprtBuildPipeline(gprt);
 
   // setup shader binding table
-  gprtBuildShaderBindingTable(gprt, GPRT_SBT_RAYGEN);
+  gprtBuildShaderBindingTable(gprt, GPRT_SBT_ALL);
 
   const int samples_per_pixel = 1;
 
@@ -134,9 +132,18 @@ int main() {
   // save the current frame buffer to file
   gprtBufferSaveImage(frameBuffer, image_width, image_height, "test.png");
 
+  gprtBufferDestroy(vertexBuffer);
+  gprtBufferDestroy(radiusBuffer);
+  gprtBufferDestroy(aabbPositionsBuffer);
   gprtBufferDestroy(frameBuffer);
+  gprtAccelDestroy(world);
+  gprtAccelDestroy(aabbAccel);
+  gprtGeomDestroy(aabbGeom);
+  gprtGeomTypeDestroy(sphereGeomType);
+  gprtMissDestroy(miss);
   gprtRayGenDestroy(rayGen);
   gprtModuleDestroy(module);
+
   gprtContextDestroy(gprt);
 
   return 0;
