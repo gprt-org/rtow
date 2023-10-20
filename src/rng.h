@@ -50,6 +50,16 @@ float lcg_randomf(inout LCGRand rng)
     return ldexp((float)lcg_random(rng), -32);
 }
 
+float3 lcg_random_vec3(inout LCGRand rng) {
+    // produce vector relative to the origin from these values
+    float theta = 2 * M_PI * lcg_randomf(rng);
+    float phi = acos(1. - 2.*lcg_randomf(rng));
+
+    return float3(sin(phi)*cos(theta),
+                  sin(phi)*cos(theta),
+                  cos(phi));
+}
+
 LCGRand get_rng(int frame_id, uint2 pixel, uint2 dims)
 {
     LCGRand rng;
