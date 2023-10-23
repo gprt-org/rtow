@@ -2,6 +2,8 @@
 #ifndef _RNG_H
 #define _RNG_H
 
+static const float MY_PI = 3.14159265f;
+
 struct LCGRand {
     uint32_t state;
 };
@@ -50,14 +52,26 @@ float lcg_randomf(inout LCGRand rng)
     return ldexp((float)lcg_random(rng), -32);
 }
 
+float lcg_uniformf(inout LCGRand rng, float min, float max) {
+    return (max - min) * lcg_randomf(rng) + min;
+}
+
 float3 lcg_random_vec3(inout LCGRand rng) {
     // produce vector relative to the origin from these values
-    float theta = 2 * M_PI * lcg_randomf(rng);
+    float theta = 2 * MY_PI * lcg_randomf(rng);
     float phi = acos(1. - 2.*lcg_randomf(rng));
 
-    return float3(sin(phi)*cos(theta),
-                  sin(phi)*cos(theta),
-                  cos(phi));
+    return normalize(float3(sin(phi)*cos(theta),
+                  sin(phi)*sin(theta),
+                  cos(phi)));
+}
+
+float3 random_in_hemisphere(inout LCGRand rng, float3 dir) {
+    float3 new_dir;
+    // get a random vector in the unit sphere
+    new_dir = lcg_random_vec3(rng);
+    if (dot(dir, new_dir) > 0) { return new_dir; }
+    else return -new_dir;
 }
 
 LCGRand get_rng(int frame_id, uint2 pixel, uint2 dims)
@@ -66,7 +80,6 @@ LCGRand get_rng(int frame_id, uint2 pixel, uint2 dims)
     rng.state = murmur_hash3_mix(0, pixel.x + pixel.y * dims.x);
     rng.state = murmur_hash3_mix(rng.state, frame_id);
     rng.state = murmur_hash3_finalize(rng.state);
-
     return rng;
 }
 
