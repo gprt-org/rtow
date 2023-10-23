@@ -104,7 +104,8 @@ GPRT_RAYGEN_PROGRAM(simpleRayGen, (RayGenData, record)) {
       // payload_color = 0.5f * bounces * payload.color;
       bounces += 1.0;
       ray.Origin = ray.Origin + payload.hitDist * ray.Direction;
-      ray.Direction = random_in_hemisphere(rng, payload.normal);
+      // ray.Direction = random_in_hemisphere(rng, payload.normal); // diffuse
+      ray.Direction = payload.normal + lcg_random_vec3(rng); // Lambertian reflection
     }
 
     color = payload_color + color;
