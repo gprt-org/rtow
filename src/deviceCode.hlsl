@@ -59,7 +59,7 @@ GPRT_RAYGEN_PROGRAM(simpleRayGen, (RayGenData, record)) {
 
   RayDesc ray;
   ray.Origin = record.camera.pos;
-  ray.TMin = 0.0;
+  ray.TMin = 0.001;
   ray.TMax = 1000;
 
   float3 color = float3(0.f, 0.f, 0.f);
@@ -133,6 +133,9 @@ GPRT_INTERSECTION_PROGRAM(SphereIntersection, (SphereGeomData, record)) {
   if (h < 0.0)
     return;
   float tHit = -b - sqrt(h);
+
+  if (tHit < RayTMin())
+    return;
 
   Attribute attr;
   attr.position = position;
